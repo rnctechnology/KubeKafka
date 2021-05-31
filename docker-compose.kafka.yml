@@ -1,0 +1,70 @@
+version: '3'
+services:
+  mariadb:
+    image: mariadb:10.5
+    ports:
+      - 3306:3306
+    volumes:
+      - mariadb-data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    networks: [ 'localnet' ]
+  zookeeper:
+    image: wurstmeister/zookeeper
+    hostname: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    volumes:
+      - 'zookeeper_data:/usr/share/zookeeper'
+    networks: ['localnet']
+  kafka:
+    image: wurstmeister/kafka:2.13-2.7.0
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - '29092:29092'
+    volumes:
+      - 'kafka_data:/usr/share/kafka'
+    environment:
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_DELETE_TOPIC_ENABLE=true
+      - KAFKA_LOG_RETENTION_HOURS=96
+      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      - KAFKA_LISTENERS=PLAINTEXT://:29092,PLAINTEXT_HOST://:9092
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+    networks: ['localnet']
+  webhookconsumer:
+    image: rnctech/webhookconsumer:latest
+    depends_on: ['zookeeper','kafka']
+    environment:
+      - MYSQL_HOST=mariadb
+      - MYSQL_DATABASE: ${MYSQL_DATABASE}
+      - MYSQL_USER: ${MYSQL_USER}
+      - MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      - kafka_brokers=kafka:29092
+      - kafka_interval=1000
+    networks: ['localnet']
+  etlconsumer:
+    image: rnctech/etlconsumer:latest
+    depends_on: ['zookeeper','kafka']
+    environment:
+      - MYSQL_DATABASE: ${MYSQL_DATABASE}
+      - MYSQL_USER: ${MYSQL_USER}
+      - MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      - kafka_brokers=kafka:29092
+      - kafka_interval=2000
+    networks: ['localnet']
+networks:
+  localnet:
+    driver: bridge
+volumes:
+  mariadb-data:
+  zookeeper_data:
+  kafka_data:

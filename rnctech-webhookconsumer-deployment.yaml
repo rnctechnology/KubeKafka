@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.22.0 (955b78124)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: webhookconsumer
+  name: webhookconsumer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: webhookconsumer
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.22.0 (955b78124)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/localnet: "true"
+        io.kompose.service: webhookconsumer
+    spec:
+      containers:
+        - env:
+            - name: INDEX_HOST
+              value: elasticsearch
+            - name: MARIADB_HOST
+              value: mariadb
+            - name: MARIADB_PASSWORD
+              value: gaddar
+            - name: kafka_brokers
+              value: kafka-np:30092
+            - name: kafka_interval
+              value: "5000"
+          image: rnctech/webhookconsumer:latest
+          name: webhookconsumer
+          resources: {}
+      restartPolicy: Always
+status: {}

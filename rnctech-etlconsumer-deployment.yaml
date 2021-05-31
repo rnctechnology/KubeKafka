@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.22.0 (955b78124)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: etlconsumer
+  name: etlconsumer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: etlconsumer
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.22.0 (955b78124)
+      creationTimestamp: null
+      labels:
+        io.kompose.service: etlconsumer
+    spec:
+      containers:
+        - env:
+            - name: MYSQL_HOST
+              value: mariadb
+            - name: MYSQL_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: kafka-conf
+                  key: db_name
+            - name: MYSQL_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: kafka-conf
+                  key: db_user
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  name: kafka-conf
+                  key: db_pwd
+            - name: kafka_brokers
+              value: kafka-np:30092
+            - name: kafka_interval
+              value: "8000"
+          image: rnctech/etlconsumer:latest
+          name: etlconsumer
+          resources: {}
+      restartPolicy: Always
+status: {}
