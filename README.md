@@ -39,4 +39,7 @@
 
 4, followups
   4.1 PVC config ReadWriteMany on Prod (aws storage/NFS)
-  4.2 consumer group with comment sync/async
+  
+  4.2 Setup with Argo workflow
+  
+  4.3 consumer group with comment sync/async
